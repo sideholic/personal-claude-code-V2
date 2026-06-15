@@ -275,20 +275,20 @@ personal-claude-code-v2/            (이 repo)
 
 ---
 
-## 12. 구현 로드맵 (제안)
+## 12. 구현 로드맵
 
-| 단계 | 산출물 | 비고 |
+| 단계 | 산출물 | 상태 |
 |---|---|---|
-| **P0** | 이 `planning.md` 합의 | ✅ 현재 |
-| **P1** | 스캐폴딩: marketplace.json, workflows plugin.json, `.claude-team/` 디렉터리, `registry.json`, CLAUDE.md(최소) | 골격 |
-| **P2** | 티켓 핵심: `ticket-protocol` 스킬, `ticket-publish.sh`(flock), `events.jsonl` emit, `git-flow` 스킬 | G2/G3 기반 |
-| **P3** | 스킬 6종(prd·design·backend·frontend·qa·review) — 간략 카드 + 필요한 표 | G5/G7 |
-| **P4** | `orchestration-guide` + `technoking` 에이전트 — 비차단 BG 디스패치·동시성 플래너 | G0/G4 |
-| **P5** | 커맨드 12종 재표현 (스킬 위임) | — |
-| **P6** | codex 브리지 동기 await 재구성 + rescue 스킬 | 8절 |
-| **P7** | stacks 오버레이 간략화 (kotlin-spring, nextjs) | G9 |
-| **P8** | (별도 repo) 대시보드 + events.jsonl 계약 설계 문서 | G8 |
-| **P9** | 멀티 테크노킹 pane 런처 (옵트인) | G6 |
+| **P0** | `planning.md` 합의 | ✅ |
+| **P1** | 스캐폴딩: marketplace.json, plugin.json, `.claude-team/` 골격, `registry.json`, 최소 CLAUDE.md | ✅ |
+| **P2** | 티켓 핵심: `ticket-protocol`, `ticket-publish.sh`(fcntl.flock), `events-emit.sh`, `git-flow` — E2E 검증 | ✅ |
+| **P3** | 스킬 6종(prd·design·backend·frontend·qa·review) + core 3종(coding·testing·documentation) | ✅ |
+| **P4** | `orchestration-guide`(6페이즈) + `technoking` 에이전트 | ✅ |
+| **P5** | 커맨드 12종 (스킬 위임) | ✅ |
+| **P6** | `adversarial-review-bridge`(codex 동기·데몬 제거) + `rescue` 스킬 | ✅ |
+| **P7** | stacks 오버레이(kotlin-spring·nextjs) + 훅(block-dangerous·stop-verification, hooks.json 명시) — 테스트 통과 | ✅ |
+| **P8** | 대시보드(별도 repo `personal-claude-code-dashboard`): Next.js 16 라이브 보드, events.jsonl SSE — 빌드+E2E 검증 | ✅ |
+| **P9** | 멀티 테크노킹: `merge-gate.sh`(flock 직렬화) + `king-pane.sh`(옵트인) — 직렬화 검증 | ✅ |
 
 ---
 
