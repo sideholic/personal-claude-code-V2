@@ -19,5 +19,5 @@ Conventional Commits. Prefix `<type>(<scope>):` in English; **subject + body in 
 ## Merge (Technoking only)
 `--squash` to `main`. Pre-merge checklist: **codex APPROVE on every PR · all AC checked · green CI · no unresolved BLOCKING.** Workers never merge. PR size soft 400 / hard 800 lines.
 
-## Multi-Technoking
-`T-NNNN` comes from the atomic counter (see ticket-protocol). The merge gate is the only other serialization point — needs a dedicated lock before multi-king is enabled (planning P9).
+## Multi-Technoking (opt-in)
+`T-NNNN` comes from the atomic counter (see ticket-protocol). The merge gate is the only other serialization point: wrap the squash merge in `bin/merge-gate.sh` (exclusive `.merge.lock`) so concurrent kings never race on `main`. Launch extra king panes with `bin/king-pane.sh [N]` (unlimited).
