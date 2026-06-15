@@ -1,0 +1,27 @@
+# personal-claude-code v2 — team config
+# /setup-team 이 이 템플릿을 대상 프로젝트의 .claude-team/config.yml 로 materialize 한다.
+version: 2
+
+# G7: 전 스킬/서브에이전트 공통 모델 (단일 출처)
+model: claude-opus-4-8
+
+review:
+  reviewer: codex          # 단독 리뷰어. Claude self-review 금지 (planning §8)
+  hard_dependency: true    # codex 미준비 시 해당 리뷰 레인만 보류 (전체 halt 아님, G0)
+  max_blocking_rounds: 3
+  in_lane_timeout_min: 30  # 행(hang) 가드 — 초과 시 에스컬레이션 반환
+
+concurrency:
+  scheduler: files_in_scope   # 비충돌 집합 → 병렬 레인
+  isolation: worktree         # .worktrees/T-NNNN per unit
+  overlap_policy: conservative # 겹칠 가능성 → depends_on 순차 (확실한 비충돌만 병렬)
+  dynamic_workflow_min_units: 2 # ≥2 비충돌 유닛일 때만 무거운 Workflow, 아니면 인라인
+
+verify:
+  stop_hook_scope: changed-files  # 변경 파일 관련 테스트만 (CI 중복 회피)
+
+dashboard:
+  events_log: .claude-team/events.jsonl  # append-only, hybrid granularity (docs/events-contract.md)
+
+codex:
+  verified_at: null        # /codex:setup 통과 시 기록

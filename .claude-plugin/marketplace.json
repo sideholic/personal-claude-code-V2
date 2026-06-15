@@ -1,0 +1,18 @@
+{
+  "name": "personal-claude-code-v2",
+  "owner": {
+    "name": "jeondoh",
+    "email": "jundo1302@gmail.com"
+  },
+  "metadata": {
+    "description": "메인 루프 Technoking 1명이 스킬을 백그라운드로 병렬 디스패치하는 비차단 오케스트레이션 플러그인",
+    "version": "2.0.0"
+  },
+  "plugins": [
+    {
+      "name": "workflows",
+      "source": "./workflows",
+      "description": "Non-blocking Technoking orchestration: skill-dispatch, parallel git-flow worktrees, ticket model, codex review. Stack-agnostic core."
+    }
+  ]
+}
