@@ -2,15 +2,15 @@
 # setup-team.sh — v2 워크스페이스 부트스트랩
 #   1) .claude-team/ 준비 (idempotent — 기존 registry/config/events 보존)
 #   2) 대시보드 백그라운드 기동 + URL
-#   3) claude-team tmux 윈도우: Technoking pane 0/1/2 (세로 33%씩), pane 0 = welcome
-# env: CLAUDE_TEAM_KINGS(기본 3) · DASH_PORT(4317) · DASHBOARD_DIR · CLAUDE_TEAM_WINDOW(claude-team)
+#   3) claude-team tmux 세션(독립): Technoking pane 0/1/2 (세로 33%씩), pane 0 = welcome
+# env: CLAUDE_TEAM_KINGS(기본 3) · DASH_PORT(4317) · DASHBOARD_DIR · CLAUDE_TEAM_SESSION(claude-team)
 set -uo pipefail
 
 TEAM_DIR="${CLAUDE_TEAM_DIR:-.claude-team}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROJECT_DIR="$PWD"
-WINDOW="${CLAUDE_TEAM_WINDOW:-claude-team}"
+SESSION="${CLAUDE_TEAM_SESSION:-${CLAUDE_TEAM_WINDOW:-claude-team}}"   # 독립 tmux 세션명 (구 CLAUDE_TEAM_WINDOW 호환)
 DASH_PORT="${DASH_PORT:-4317}"
 KINGS="${CLAUDE_TEAM_KINGS:-3}"
 
@@ -66,20 +66,23 @@ cat > "$WELCOME" <<EOF
 ────────────────────────────────────────────────
 EOF
 
-if [ -n "${TMUX:-}" ]; then
-  tmux new-window -n "$WINDOW" -c "$PROJECT_DIR"
-else
-  tmux kill-session -t "$WINDOW" 2>/dev/null || true
-  tmux new-session -d -s "$WINDOW" -n "$WINDOW" -c "$PROJECT_DIR"
-fi
-for _ in $(seq 2 "$KINGS"); do tmux split-window -h -t "$WINDOW" -c "$PROJECT_DIR"; done
-tmux select-layout -t "$WINDOW" even-horizontal     # 동일 폭 세로 분할
+# 항상 독립 세션 생성 (현재 tmux 세션에 윈도우 추가가 아니라 별도 세션). 기존 동명 세션은 교체.
+tmux kill-session -t "$SESSION" 2>/dev/null || true
+tmux new-session -d -s "$SESSION" -n "$SESSION" -c "$PROJECT_DIR"
+for _ in $(seq 2 "$KINGS"); do tmux split-window -h -t "$SESSION:" -c "$PROJECT_DIR"; done
+tmux select-layout -t "$SESSION:" even-horizontal     # 동일 폭 세로 분할
+# pane id 로 타깃 — 인덱스/이름·base-index 무관, 현재 세션의 stale 'claude-team' 윈도우와 충돌 안 함
+PANES=(); while IFS= read -r p; do PANES+=("$p"); done < <(tmux list-panes -t "$SESSION:" -F '#{pane_id}')
 # pane 0 = 메인 킹: welcome + 로드 시 이전 핸드오프 자동 복원
-tmux send-keys -t "$WINDOW.0" "clear; cat $WELCOME; claude $KING_FLAGS \"/workflows:handoff --resume\"" Enter
+tmux send-keys -t "${PANES[0]}" "clear; cat $WELCOME; claude $KING_FLAGS \"/workflows:handoff --resume\"" Enter
 for i in $(seq 1 $((KINGS-1))); do
-  tmux send-keys -t "$WINDOW.$i" "clear; printf 'Technoking — pane %s (추가 킹)\n\n' $i; claude $KING_FLAGS" Enter
+  tmux send-keys -t "${PANES[$i]}" "clear; printf 'Technoking — pane %s (추가 킹)\n\n' $i; claude $KING_FLAGS" Enter
 done
-tmux select-pane -t "$WINDOW.0"
-echo "  ✓ tmux '$WINDOW' — Technoking pane 0..$((KINGS-1)) (${KINGS}개, 세로 33%씩)"
-[ -z "${TMUX:-}" ] && echo "  → 접속: tmux attach -t $WINDOW"
+tmux select-pane -t "${PANES[0]}"
+echo "  ✓ tmux 세션 '$SESSION' (독립) — Technoking pane 0..$((KINGS-1)) (${KINGS}개, 세로 33%씩)"
+if [ -n "${TMUX:-}" ]; then
+  tmux switch-client -t "$SESSION" 2>/dev/null && echo "  → 세션 '$SESSION' 로 전환됨" || echo "  → 전환: tmux switch-client -t $SESSION"
+else
+  echo "  → 접속: tmux attach -t $SESSION"
+fi
 echo "✅ setup 완료 — 대시보드 $DASH_URL · pane 0 에서 /feat 시작"
