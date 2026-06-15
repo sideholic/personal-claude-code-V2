@@ -1,0 +1,11 @@
+{
+  "name": "stack-nextjs",
+  "description": "Next.js (App Router) + TypeScript stack overlay: core conventions, data fetching, testing. Layers on coding/testing-principles.",
+  "version": "2.0.0",
+  "author": {
+    "name": "jeondoh",
+    "email": "jundo1302@gmail.com"
+  },
+  "license": "MIT",
+  "keywords": ["nextjs", "react", "typescript", "stack-overlay"]
+}

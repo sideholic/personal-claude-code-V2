@@ -1,0 +1,11 @@
+{
+  "name": "stack-kotlin-spring",
+  "description": "Kotlin + Spring Boot stack overlay: core conventions, data access, testing. Layers on coding/testing-principles.",
+  "version": "2.0.0",
+  "author": {
+    "name": "jeondoh",
+    "email": "jundo1302@gmail.com"
+  },
+  "license": "MIT",
+  "keywords": ["kotlin", "spring-boot", "jpa", "stack-overlay"]
+}
