@@ -24,6 +24,10 @@ mkdir -p "$TEAM_DIR"/tickets/{queue,in-progress,in-review,done,cancelled} \
 [ -f "$TEAM_DIR/events.jsonl" ]          || : > "$TEAM_DIR/events.jsonl"
 echo "  ✓ .claude-team/ 준비 (기존 registry/config 보존)"
 
+# claude 기동 플래그 — model/effort 는 config.yml(SSOT)에서, perms 는 bypass (L5 모델 불일치 제거)
+KING_FLAGS="$("$SCRIPT_DIR/launch-flags.sh" "$TEAM_DIR")"
+echo "  ✓ king flags: $KING_FLAGS"
+
 # events.jsonl 절대경로 (대시보드 EVENTS_LOG)
 case "$TEAM_DIR" in /*) EVENTS_ABS="$TEAM_DIR/events.jsonl";; *) EVENTS_ABS="$PROJECT_DIR/$TEAM_DIR/events.jsonl";; esac
 
@@ -71,9 +75,9 @@ fi
 for _ in $(seq 2 "$KINGS"); do tmux split-window -h -t "$WINDOW" -c "$PROJECT_DIR"; done
 tmux select-layout -t "$WINDOW" even-horizontal     # 동일 폭 세로 분할
 # pane 0 = 메인 킹: welcome + 로드 시 이전 핸드오프 자동 복원
-tmux send-keys -t "$WINDOW.0" "clear; cat $WELCOME; claude \"/workflows:handoff --resume\"" Enter
+tmux send-keys -t "$WINDOW.0" "clear; cat $WELCOME; claude $KING_FLAGS \"/workflows:handoff --resume\"" Enter
 for i in $(seq 1 $((KINGS-1))); do
-  tmux send-keys -t "$WINDOW.$i" "clear; printf 'Technoking — pane %s (추가 킹)\n\n' $i; claude" Enter
+  tmux send-keys -t "$WINDOW.$i" "clear; printf 'Technoking — pane %s (추가 킹)\n\n' $i; claude $KING_FLAGS" Enter
 done
 tmux select-pane -t "$WINDOW.0"
 echo "  ✓ tmux '$WINDOW' — Technoking pane 0..$((KINGS-1)) (${KINGS}개, 세로 33%씩)"

@@ -10,8 +10,11 @@ command -v tmux >/dev/null || { echo "tmux required for multi-king" >&2; exit 3;
 [ -n "${TMUX:-}" ] || { echo "run inside a tmux session first (tmux new -s claude)" >&2; exit 2; }
 case "$N" in (*[!0-9]*|'') echo "N must be a positive integer" >&2; exit 2;; esac
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FLAGS="$("$SCRIPT_DIR/launch-flags.sh")"   # model/effort from config.yml (SSOT) + bypass perms
+
 for _ in $(seq 1 "$N"); do
-  tmux split-window -h -c "$PWD" "claude"
+  tmux split-window -h -c "$PWD" "claude $FLAGS"
   tmux select-layout tiled >/dev/null
 done
 echo "launched $N Technoking pane(s). They share the atomic ticket counter + merge gate; no pane cap."
