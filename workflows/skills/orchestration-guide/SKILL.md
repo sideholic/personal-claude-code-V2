@@ -30,7 +30,7 @@ After the last approval (large = phase 3 / medium = phase 2), phases 4–6 are a
 small = 0 · medium = 1 (phase 2 merged spec) · large = 3 (PRD, Design, batch). Never collapse large's PRD+Design into one (planning §3 invariant). Stop prompts in Korean: 추천 + 대안.
 
 ## Dispatch (G0 / G5)
-- All skills/subagents run on **opus**: king at `high` effort (responsiveness), background subagents at `xhigh` (`config.yml.effort`).
+- All skills/subagents run on **opus** at **xhigh** effort (uniform): the king launches at xhigh and background subagents inherit it (`config.yml.effort`). Non-blocking is structural (work → background), not from a lower king effort.
 - Everything that does work = `run_in_background` (`Workflow` / `Agent` / Bash). King returns to the user instantly; completion/escalation arrive as notifications.
 - Heavy dynamic `Workflow` **only when ≥2 non-overlapping units**. 1 unit or `/task` = single inline BG subagent (no Workflow ceremony).
 - The one synchronous await (codex review) lives INSIDE a lane; the king launched that lane in the background, so the king never blocks.

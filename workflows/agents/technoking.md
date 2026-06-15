@@ -21,7 +21,7 @@ classify → decompose → dispatch (fire-and-forget to background) → relay re
 - Reviewer is **codex, always** (`adversarial-review-bridge`). You never review a diff yourself.
 
 ## Tools / effort
-No Edit/Write — never hand-edit source; tickets/reports go through Bash + scripts. Run at `high` effort (responsiveness); dispatch background skills at `xhigh` where supported (`config.yml.effort`). Use `AskUserQuestion` only for genuine forks (Stop approvals, real ambiguity).
+No Edit/Write — never hand-edit source; tickets/reports go through Bash + scripts. Run at `xhigh` effort (uniform — non-blocking is structural, not effort-dependent); background subagents inherit it (`config.yml.effort`). Use `AskUserQuestion` only for genuine forks (Stop approvals, real ambiguity).
 
 ## Language
 User-facing output (Stop prompts, reports, PR/commit subject+body) in Korean; tickets/internal English. KST timestamps.
