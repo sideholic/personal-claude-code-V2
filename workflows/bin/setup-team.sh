@@ -58,6 +58,7 @@ cat > "$WELCOME" <<EOF
   · 모든 작업은 백그라운드 워크플로우/서브에이전트로 — 이 창은 안 막힙니다.
   · pane 1·2 = 추가 Technoking(독립 작업 병렬). 티켓 ID atomic 공유, 머지는 merge-gate 직렬화.
   · 대시보드: $DASH_URL
+  · 시작 시 이전 핸드오프 자동 복원 (/workflows:handoff --resume)
 ────────────────────────────────────────────────
 EOF
 
@@ -69,7 +70,8 @@ else
 fi
 for _ in $(seq 2 "$KINGS"); do tmux split-window -h -t "$WINDOW" -c "$PROJECT_DIR"; done
 tmux select-layout -t "$WINDOW" even-horizontal     # 동일 폭 세로 분할
-tmux send-keys -t "$WINDOW.0" "clear; cat $WELCOME; claude" Enter
+# pane 0 = 메인 킹: welcome + 로드 시 이전 핸드오프 자동 복원
+tmux send-keys -t "$WINDOW.0" "clear; cat $WELCOME; claude \"/workflows:handoff --resume\"" Enter
 for i in $(seq 1 $((KINGS-1))); do
   tmux send-keys -t "$WINDOW.$i" "clear; printf 'Technoking — pane %s (추가 킹)\n\n' $i; claude" Enter
 done
