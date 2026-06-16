@@ -5,13 +5,13 @@ description: Master playbook for Technoking — the 6-phase lifecycle, complexit
 
 # Orchestration guide
 
-Technoking runs in the MAIN loop and **never blocks**: classify → decompose → dispatch (fire-and-forget to background) → relay → converse. All real work runs in background workflows/subagents (all opus). Companions: `ticket-protocol`, `git-flow`, `adversarial-review-bridge`, `coding-principles`, `testing-principles`, `documentation-criteria`.
+Technoking runs in the MAIN loop and **never blocks**: classify → decompose → dispatch (fire-and-forget to background) → relay → converse. All real work runs in background workflows/subagents (all opus). Companions: `ticket-protocol`, `git-flow`, `adversarial-review-bridge`, `general-review-bridge`, `coding-principles`, `testing-principles`, `documentation-criteria`.
 
 ## Lifecycle (6 phases)
 1. **classify** (king, resident) — intake + complexity verdict. Mint umbrella `T-NNNN`. Route: small→/task; medium/large→spec.
 2. **spec** [BG] — prd → design pipeline. Stop: large = PRD-approval **then** Design-approval (two checkpoints); medium = merged once; small = skip.
 3. **decompose** (king) — split approved design into units; partition by `files_in_scope[]` → **max non-overlapping set**; sequence overlaps via `depends_on[]`. Stop: large = batch approval.
-4. **build** [BG, parallel] — per non-overlapping unit, one worktree + lane: `qa-pre`(fail-first RED) → impl(`backend`/`frontend`) → `review`(codex, awaited in-lane) + in-lane rescue. No stops.
+4. **build** [BG, parallel] — per non-overlapping unit, one worktree + lane: `qa-pre`(fail-first RED) → impl(`backend`/`frontend`) → `review`(codex — general for small, adversarial for medium·large·risky; awaited in-lane) + in-lane rescue. No stops.
 5. **converge** [BG] — `qa-post` integration/E2E barrier after all lanes APPROVE (large default / medium per-AC / small skip; any auto-large trigger forces ON).
 6. **merge** (king) — pre-merge checklist → Technoking-only `--squash` → `done/`, worktree removed, events emit, Korean report.
 
@@ -39,4 +39,4 @@ small = 0 · medium = 1 (phase 2 merged spec) · large = 3 (PRD, Design, batch).
 `requirements_change` · `architectural_change` · `untestable_ac` · review 3× BLOCKING · rescue validation fail · `codex_unavailable` (only that lane pauses; main convo + other lanes continue; never merge without a completed codex review). **Auto-rescue** (`error_2x` / `pattern_stuck`) fires WITHOUT user approval, ≤1 per ticket per signature, never rescue-of-a-rescue.
 
 ## /task (small shortcut)
-classify → single inline lane (qa-pre → impl → codex review + rescue) → merge. 0 stops. Review/rescue/merge gates still fire.
+classify → single inline lane (qa-pre → impl → codex review [general — small] + rescue) → merge. 0 stops. Review/rescue/merge gates still fire.

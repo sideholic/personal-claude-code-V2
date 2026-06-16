@@ -18,7 +18,7 @@ classify → decompose → dispatch (fire-and-forget to background) → relay re
 - Allocate tickets with `bin/ticket-publish.sh`: write each ticket's content first (Bash heredoc), then publish (emits the event). See `ticket-protocol`.
 - Partition units by `files_in_scope[]` — conservative: possible overlap → `depends_on[]` sequence. One worktree per unit (`git-flow`).
 - Merge is yours alone: `--squash` after the pre-merge checklist. Skills never merge.
-- Reviewer is **codex, always** (`adversarial-review-bridge`). You never review a diff yourself.
+- Reviewer is **codex, always** (the `review` skill picks general/adversarial by ticket weight). You never review a diff yourself.
 
 ## Tools / effort
 No Edit/Write — never hand-edit source; tickets/reports go through Bash + scripts. Run at `xhigh` effort (uniform — non-blocking is structural, not effort-dependent); background subagents inherit it (`config.yml.effort`). Use `AskUserQuestion` only for genuine forks (Stop approvals, real ambiguity).

@@ -208,7 +208,7 @@ events.jsonl          ← 대시보드용 append-only 이벤트 (신규)
 
 **디스패치 규칙 (G5):** dynamic workflow는 **≥2 비충돌 유닛일 때만**. 단일 유닛·`/task` = 인라인 BG 서브에이전트(의식 없음). 비차단(G0): 모든 [BG]는 run_in_background, 킹은 디스패치 직후 즉시 사용자 복귀. 시스템에서 진짜 동기 await는 codex 리뷰 하나뿐 — 그건 **레인 내부**에서 일어나고 킹은 그 레인을 BG로 띄워 안 막힌다.
 
-**품질 게이트 (복잡도·페이즈 무관 불변):** PR마다 codex 어드버서리얼 리뷰(codex 단독 리뷰어), 전 AC 체크 통과, green CI, **테크노킹 단독 squash 머지** + pre-merge 체크리스트.
+**품질 게이트 (복잡도·페이즈 무관 불변):** PR마다 codex 리뷰(codex 단독 리뷰어 — small=일반 `/codex:review`, medium·large·위험=적대적 `/codex:adversarial-review`), 전 AC 체크 통과, green CI, **테크노킹 단독 squash 머지** + pre-merge 체크리스트.
 
 ### 복잡도 판정 (라우팅 두뇌)
 
@@ -221,7 +221,7 @@ events.jsonl          ← 대시보드용 append-only 이벤트 (신규)
 
 ## 8. 코드 리뷰 & rescue (codex 고정, 하네스 제거)
 
-- **리뷰어 = codex** (`/codex:adversarial-review`). Roastmaster 스킬은 diff를 직접 보지 않고 codex 결과를 **판정**(uphold/downgrade/escalate)·분류(BLOCKING/SHOULD/NIT/OUT-OF-SCOPE) → verdict(APPROVE/COMMENT/BLOCKING).
+- **리뷰어 = codex**, 가중치별 **2모드**: small+auto-large 트리거 없음 → 일반 `/codex:review`(빌트인 리뷰어, `general-review-bridge`); medium·large·auto-large 트리거 → 적대적 `/codex:adversarial-review`(`adversarial-review-bridge`, 미확실 시 기본). Roastmaster 스킬은 어느 모드든 diff를 직접 보지 않고 codex 결과를 **판정**(uphold/downgrade/escalate)·분류(BLOCKING/SHOULD/NIT/OUT-OF-SCOPE) → verdict(APPROVE/COMMENT/BLOCKING), RR에 사용 모드 기록.
 - **하네스 제거**: 비차단 dispatch + `/codex:result` 폴링 + RR placeholder + `.runtime` sentinel + 30분 타임아웃 데몬 삭제. 대신 **백그라운드 리뷰 워크플로우 내부에서 codex 결과를 동기 await** (킹은 그 워크플로우를 BG로 띄워 안 막힘).
 - **codex 미준비 처리**: 전체 halt 금지(G0). 해당 리뷰 레인만 보류 → 에스컬레이션을 킹에 notification → 킹이 사용자에게 안내(`/codex:setup`). 메인 대화는 계속 가능.
 - **rescue**: 6-step 상태머신 → 1개 `rescue` 스킬로 축소. 불변식 유지(티켓·시그니처당 ≤1, 초과 시 사용자, rescue의 rescue 금지). `error_signature` 수동 SHA-1 + `kind:error_2x` inbox 프로토콜 삭제 — 워크플로우가 실패를 직접 본다.
@@ -262,7 +262,7 @@ personal-claude-code-v2/            (이 repo)
     agents/     technoking.md       ← 유일한 에이전트
     skills/     prd, design, backend, frontend, qa, review,
                 orchestration-guide, ticket-protocol, git-flow,
-                adversarial-review-bridge, coding-principles, testing-principles
+                adversarial-review-bridge, general-review-bridge, coding-principles, testing-principles
     bin/        ticket-publish.sh (flock), board-emit (events.jsonl) — 그 외 v1 bin 삭제
     hooks/      block-dangerous.sh, stop-verification (plugin.json/hooks.json에 명시 배선)
   stacks/                           ← 스왑형 오버레이 (독립 버전)
