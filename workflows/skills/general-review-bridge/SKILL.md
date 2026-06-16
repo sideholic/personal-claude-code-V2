@@ -8,8 +8,8 @@ description: How to invoke the general codex review (`/codex:review`, the built-
 codex is the **sole** reviewer — Claude never walks its own diff. This is the *general* (built-in reviewer) pass for light work; the *adversarial* pass (`adversarial-review-bridge`) challenges design/approach and is reserved for heavier/risky tickets. The `review` skill picks the mode.
 
 ## Mode selection (the review skill decides)
-- **general** (this skill) — `complexity: small` **and** no auto-large trigger (auth/permission · DB schema migration · new domain · external payment/legal).
-- **adversarial** (`adversarial-review-bridge`) — medium/large, or **any** auto-large trigger. Default to adversarial when unsure.
+- **general** (this skill) — `complexity: small` or `medium`.
+- **adversarial** (`adversarial-review-bridge`) — `complexity: large` only. Every auto-large trigger (auth/permission · DB schema migration · new domain · external payment/legal) already forces `large`, so it lands in adversarial automatically.
 
 Either way: every PR gets exactly one codex review per round, and the king-only `--squash` merge gate is unchanged.
 
