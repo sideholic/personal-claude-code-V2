@@ -1,7 +1,7 @@
 {
   "name": "workflows",
   "description": "Non-blocking Technoking orchestration: skill-dispatch, parallel git-flow worktrees, ticket model, codex review. Stack-agnostic core.",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "author": {
     "name": "jeondoh",
     "email": "jundo1302@gmail.com"
