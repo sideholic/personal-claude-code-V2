@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "메인 루프 Technoking 1명이 스킬을 백그라운드로 병렬 디스패치하는 비차단 오케스트레이션 플러그인",
-    "version": "2.0.0"
+    "version": "2.0.1"
   },
   "plugins": [
     {
