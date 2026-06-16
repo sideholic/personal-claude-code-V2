@@ -34,16 +34,24 @@ case "$TEAM_DIR" in /*) EVENTS_ABS="$TEAM_DIR/events.jsonl";; *) EVENTS_ABS="$PR
 # 2) 대시보드 — 백그라운드 기동 + URL
 DASH_DIR="${DASHBOARD_DIR:-$(cd "$PROJECT_DIR/.." 2>/dev/null && pwd)/personal-claude-code-dashboard}"
 DASH_URL="http://localhost:$DASH_PORT"
+DASH_OK=0
 if curl -fs -o /dev/null "$DASH_URL/" 2>/dev/null; then
-  echo "  ✓ 대시보드 이미 실행 중: $DASH_URL"
+  echo "  ✓ 대시보드 이미 실행 중: $DASH_URL"; DASH_OK=1
 elif [ -d "$DASH_DIR" ] && [ -x "$DASH_DIR/node_modules/.bin/next" ]; then
   ( cd "$DASH_DIR" && EVENTS_LOG="$EVENTS_ABS" \
       nohup node_modules/.bin/next dev -p "$DASH_PORT" >"/tmp/claude-board-$DASH_PORT.log" 2>&1 & )
-  echo "  ✓ 대시보드 기동: $DASH_URL  (events: $TEAM_DIR/events.jsonl · log: /tmp/claude-board-$DASH_PORT.log)"
+  echo "  ✓ 대시보드 기동: $DASH_URL  (events: $TEAM_DIR/events.jsonl · log: /tmp/claude-board-$DASH_PORT.log)"; DASH_OK=1
 elif [ -d "$DASH_DIR" ]; then
   echo "  ℹ 대시보드 node_modules 없음 — '$DASH_DIR' 에서 'pnpm install' 후 재시도"
 else
   echo "  ℹ 대시보드 repo 없음 ($DASH_DIR) — DASHBOARD_DIR 로 경로 지정 가능"
+fi
+
+# 대시보드 준비되면 크롬으로 자동 오픈 (macOS · 백그라운드 — setup 은 안 막음)
+if [ "$DASH_OK" = 1 ] && command -v open >/dev/null 2>&1; then
+  ( for _ in $(seq 1 30); do curl -fs -o /dev/null "$DASH_URL/" 2>/dev/null && break; sleep 0.5; done
+    open -a "Google Chrome" "$DASH_URL" >/dev/null 2>&1 || open "$DASH_URL" >/dev/null 2>&1 ) &
+  echo "  ✓ 크롬으로 대시보드 자동 오픈: $DASH_URL"
 fi
 
 # 3) tmux — Technoking pane 3개 (세로 33%씩)
