@@ -225,6 +225,7 @@ events.jsonl          ← 대시보드용 append-only 이벤트 (신규)
 - **하네스 제거**: 비차단 dispatch + `/codex:result` 폴링 + RR placeholder + `.runtime` sentinel + 30분 타임아웃 데몬 삭제. 대신 **백그라운드 리뷰 워크플로우 내부에서 codex 결과를 동기 await** (킹은 그 워크플로우를 BG로 띄워 안 막힘).
 - **codex 미준비 처리**: 전체 halt 금지(G0). 해당 리뷰 레인만 보류 → 에스컬레이션을 킹에 notification → 킹이 사용자에게 안내(`/codex:setup`). 메인 대화는 계속 가능.
 - **rescue**: 6-step 상태머신 → 1개 `rescue` 스킬로 축소. 불변식 유지(티켓·시그니처당 ≤1, 초과 시 사용자, rescue의 rescue 금지). `error_signature` 수동 SHA-1 + `kind:error_2x` inbox 프로토콜 삭제 — 워크플로우가 실패를 직접 본다.
+- **BLOCKING 라운드 정책**: 1라운드 BLOCKING → fix → re-review. **2회 연속 BLOCKING** 도달 시 테크노킹 단독 판단(레인은 round 3로 자동 루프 금지) — ⓐ **trivial-fix**면 round 3 허용(round 3도 BLOCKING이면 escalate), ⓑ **`pattern_stuck`**(같은 BLOCKING 반복)이면 auto-rescue 유지(≤1/ticket/sig, rescue의 rescue 금지), ⓒ **기본(설계·접근 문제)**이면 **design부터 재진행**(phase 2 재진입) — large 티켓은 이때 **Design Stop만** 재발생(PRD 승인은 유지). 라운드·verdict는 RR 기록, 재진행/루프 결정은 킹 단독.
 
 ---
 

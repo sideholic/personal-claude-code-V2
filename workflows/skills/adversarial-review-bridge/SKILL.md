@@ -17,7 +17,7 @@ codex is the **sole** code reviewer — Claude never walks its own diff. Integra
      ```
      `--wait` makes the script run synchronously and print the full structured review to stdout; detach via Bash `run_in_background: true` so the king isn't blocked (the task output file holds the verbatim review when it finishes).
 2. The `review` skill JUDGES only: classify findings BLOCKING/SHOULD/NIT/OUT-OF-SCOPE → verdict APPROVE/COMMENT/BLOCKING. Uphold/downgrade/escalate codex calls.
-3. Write `RR-T-NNNN-R` (round R, immutable). BLOCKING → fix → re-review (max 3 rounds → escalate).
+3. Write `RR-T-NNNN-R` (round R, immutable). Round 1 BLOCKING → fix → re-review. **At the 2nd consecutive BLOCKING, defer to Technoking** (never auto-loop to round 3): trivial-fix → round 3 (still BLOCKING → escalate) · `pattern_stuck` → rescue · default → restart from design (large → Design Stop only). See `orchestration-guide`.
 
 ## codex unavailable
 Not a global halt (G0). Only the affected lane pauses and notifies the king; the main conversation and other lanes continue. **Never merge without a completed codex review.**
@@ -28,4 +28,4 @@ Triggers: `error_2x` (the lane's own test runner sees the same failure twice) or
 - Run the `rescue` skill **≤1 per ticket per signature**, never rescue-of-a-rescue. Failure → escalate to user.
 
 ## Pipeline
-codex review → (BLOCKING) fix → re-review … OR (error_2x / pattern_stuck) → `rescue` skill → validation (RV ticket, rescue branch) → re-review. PASS → continue; FAIL → user.
+codex review → (BLOCKING) fix → re-review … **2nd consecutive BLOCKING → king's call**: round 3 (→ escalate) / `rescue` (error_2x · pattern_stuck → validation via RV ticket + rescue branch → re-review) / restart from design (large → Design Stop only). PASS → continue; FAIL → user.

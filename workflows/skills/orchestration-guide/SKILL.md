@@ -38,5 +38,7 @@ small = 0 · medium = 1 (phase 2 merged spec) · large = 3 (PRD, Design, batch).
 ## Escalation (always surface, any tier)
 `requirements_change` · `architectural_change` · `untestable_ac` · review 3× BLOCKING · rescue validation fail · `codex_unavailable` (only that lane pauses; main convo + other lanes continue; never merge without a completed codex review). **Auto-rescue** (`error_2x` / `pattern_stuck`) fires WITHOUT user approval, ≤1 per ticket per signature, never rescue-of-a-rescue.
 
+**BLOCKING-round decision** — at the **2nd consecutive BLOCKING round** the lane must NOT auto-loop to round 3; it defers to the king, who picks one: ⓐ **trivial-fix** → allow round 3 (still BLOCKING at round 3 → escalate); ⓑ **`pattern_stuck`** (same BLOCKING repeating) → auto-rescue (unchanged); ⓒ **default** (design/approach is wrong) → **restart from design** = re-enter phase 2 (spec). For `large`, the design-restart re-triggers the **Design Stop only** — PRD stays approved.
+
 ## /task (small shortcut)
 classify → single inline lane (qa-pre → impl → codex review [general — small] + rescue) → merge. 0 stops. Review/rescue/merge gates still fire.
