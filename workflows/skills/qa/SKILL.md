@@ -9,4 +9,5 @@ Two phases, called at different points:
 - **qa-pre** (in each unit's lane, before impl): one fail-first test per AC, committed RED. Untestable AC → escalate, never fake.
 - **qa-post** (converge barrier, after lanes are merge-ready): integration + E2E across unit seams; verify green CI + all AC checked.
 
+On each meaningful qa step, update ticket progress: `bin/ticket-transition.sh T-NNNN --progress-note "<1-2 sentences>"` (see `ticket-protocol`).
 Hunt edge cases. Tests-only — **never touch production code.** See `testing-principles` (+ `stacks/*`). Emit `stage.*` (actor `skill:qa`).

@@ -11,9 +11,9 @@ Technoking runs in the MAIN loop and **never blocks**: classify → decompose �
 1. **classify** (king, resident) — intake + complexity verdict. Mint umbrella `T-NNNN`. Route: small→/task; medium/large→spec.
 2. **spec** [BG] — prd → design pipeline. Stop: large = PRD-approval **then** Design-approval (two checkpoints); medium = merged once; small = skip.
 3. **decompose** (king) — split approved design into units; partition by `files_in_scope[]` → **max non-overlapping set**; sequence overlaps via `depends_on[]`. Stop: large = batch approval.
-4. **build** [BG, parallel] — per non-overlapping unit, one worktree + lane: `qa-pre`(fail-first RED) → impl(`backend`/`frontend`) → `review`(codex — general for small·medium, adversarial for large; awaited in-lane) + in-lane rescue. No stops.
+4. **build** [BG, parallel] — per non-overlapping unit, one worktree + lane (claim transitions queued→in_progress via `bin/ticket-transition.sh`, keeping board + events in sync): `qa-pre`(fail-first RED) → impl(`backend`/`frontend`) → `review`(codex — general for small·medium, adversarial for large; awaited in-lane) + in-lane rescue. No stops.
 5. **converge** [BG] — `qa-post` integration/E2E barrier after all lanes APPROVE (large default / medium per-AC / small skip; any auto-large trigger forces ON).
-6. **merge** (king) — pre-merge checklist → Technoking-only `--squash` → `done/`, worktree removed, events emit, Korean report.
+6. **merge** (king) — pre-merge checklist → Technoking-only `--squash` → in_review→done via `bin/ticket-transition.sh` (moves to `done/` + emits events, keeping board in sync), worktree removed, Korean report.
 
 After the last approval (large = phase 3 / medium = phase 2), phases 4–6 are autonomous (user interrupt = implicit consent). **No merge-time Stop.**
 

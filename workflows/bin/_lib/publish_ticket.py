@@ -2,7 +2,8 @@
 """Patch frontmatter, derive slug, write ticket to queue/. Print dest then title.
 
 Usage: publish_ticket.py <src.md> <queue_dir> <id> <type> <now_iso>
-Auto-fills id/type/status/created/updated/author only if absent.
+Auto-fills id/type/status/author + parent_feature/priority/rescue_count/review_rounds
+only if absent. created/updated are FORCED (script value always wins).
 """
 import os
 import re
@@ -26,12 +27,22 @@ def main() -> None:
         if k not in present:
             lines.append(f"{k}: {v}")
 
+    def force(k: str, v: str) -> None:
+        # Strip any existing top-level key line, then append the script value.
+        nonlocal lines
+        lines = [l for l in lines if not (":" in l and not l[:1].isspace() and l.split(":", 1)[0].strip() == k)]
+        lines.append(f"{k}: {v}")
+
     ensure("id", tid)
     ensure("type", ttype)
     ensure("status", "queued")
-    ensure("created", now)
-    ensure("updated", now)
     ensure("author", "technoking")
+    ensure("parent_feature", "standalone")
+    ensure("priority", "medium")
+    ensure("rescue_count", "0")
+    ensure("review_rounds", "0")
+    force("created", now)
+    force("updated", now)
 
     slug = re.sub(r"[^\w가-힣]+", "-", title, flags=re.UNICODE).strip("-").lower()[:40] or "untitled"
     dest = os.path.join(queue, f"{tid}-{slug}.md")

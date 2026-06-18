@@ -7,7 +7,7 @@ description: One-shot rescue skill — when a build lane fails twice (error_2x) 
 
 Invoked by a lane on `error_2x` / `pattern_stuck` (see `adversarial-review-bridge`). Goal: unstick the lane without the user.
 
-1. **De-dup**: skip if a rescue already ran for this ticket + `error_signature`.
+1. **De-dup**: skip if a rescue already ran for this ticket + `error_signature`. On trigger, bump the counter (no status change): `bin/ticket-transition.sh T-NNNN --bump-rescue`.
 2. **Dispatch** `/codex:rescue` (error_signature in the prompt) on a `rescue/T-NNNN` branch.
 3. **Validate** the returned patch: open an `RV-NNNN` validation ticket (no new feature work), run the failing AC tests / build.
 4. PASS → re-review (codex) → continue the lane. FAIL → **escalate to user** (never auto-retry a rescue).

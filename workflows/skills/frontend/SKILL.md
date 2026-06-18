@@ -9,5 +9,6 @@ Implement the ticket in `.worktrees/T-NNNN` on `feat/T-NNNN-<slug>`. Owns pages/
 
 Make the fail-first AC tests pass; add component tests. Match the interface contracts exactly. a11y is not optional.
 
+On each meaningful impl step, update ticket progress: `bin/ticket-transition.sh T-NNNN --progress-note "<1-2 sentences>"` (see `ticket-protocol`).
 See `coding-principles` + `testing-principles` (+ `stacks/*` for the framework). Emit `stage.*` (actor `skill:frontend`).
 Return: branch · PR · summary. **Never merge.**
