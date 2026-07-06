@@ -1,26 +1,44 @@
 ---
 name: adversarial-review-bridge
-description: How to invoke codex adversarial review (the sole reviewer) and run the auto-rescue pipeline. Use whenever the review skill reviews a PR or a lane triggers rescue. codex is required; its absence pauses only that lane.
+description: How to run the adversarial reviewer subagent (an independent Claude Opus instance at max effort) and the auto-rescue pipeline. Use whenever the review skill reviews a PR or a lane triggers rescue. The reviewer is a separate subagent; a transient agent failure pauses only that lane.
 ---
 
 # Adversarial review bridge
 
-codex is the **sole** code reviewer — Claude never walks its own diff. Integration is synchronous **inside the build lane** (no daemon, no polling, no inbox).
+The reviewer is an **independent reviewer subagent** — a separate Claude instance spun with `model: opus` at **`effort: 'max'`**, never the implementing agent. Independence comes from **context isolation** (fresh context, no access to the implementer's reasoning) and **adversarial framing** (prompted to break the diff); the max effort tier makes it review deeper than the xhigh implementer. Integration is synchronous **inside the build lane** (no daemon, no polling, no inbox).
+
+## ⚠ Spawn via the Workflow `agent()` primitive — required for max effort
+Per-agent `effort` is honored **only** through the Workflow `agent()` primitive (`opts.effort`). The plain **Agent tool has no `effort` parameter** — an Agent-tool subagent inherits the session effort, which is *not* guaranteed to be max. So the reviewer must be spawned from **inside a Workflow lane**:
+```js
+await agent(REVIEW_PROMPT, { model: 'opus', effort: 'max', schema: FINDINGS_SCHEMA, label: `review:${ticket}` })
+```
+(A single-unit `/task` lane that would otherwise be a bare Agent-tool subagent still wraps the review step in a one-agent Workflow, or runs with the session already at max effort. Never rely on a plain Agent-tool dispatch to deliver max-effort review.)
 
 ## Review (per PR, per round)
-1. Run the codex adversarial review on the PR and **await the result in-lane** (the lane is already a background workflow, so the king isn't blocked). In-lane timeout guard (default 30 min) → escalation, not a parked worktree.
-   - **Always pass `--model gpt-5.5` — every round, no exceptions.** This machine's codex runs in **ChatGPT-account mode**, which 400-rejects every `*-codex` model (`"The '<x>-codex' model is not supported when using Codex with a ChatGPT account."`). Both `/codex:adversarial-review` and `/codex:review` default to `gpt-5.3-codex` → guaranteed failure without the flag. The companion's review path accepts `--model` (`valueOptions: ["base","scope","model","cwd"]`) even though the command's `argument-hint` omits it. Switching codex to API-key mode re-enables `-codex` models — user's call via `/codex:setup`; until then, **gpt-5.5**.
-   - Call the companion **directly** (don't rely on the slash-command's interactive wrapper or its model default). Run from the PR's worktree; `<base>` = PR base (e.g. `develop`):
-     ```bash
-     CODEX_ROOT="$(ls -d ~/.claude/plugins/cache/openai-codex/codex/*/ | tail -1)"
-     node "$CODEX_ROOT/scripts/codex-companion.mjs" adversarial-review "--base <base> --model gpt-5.5 --wait"
+1. Spawn the reviewer subagent and **await the result in-lane** (the lane is already a background workflow, so the king isn't blocked). In-lane timeout guard (default 30 min) → escalation, not a parked worktree.
+   - `agent({ model: 'opus', effort: 'max', schema })` run from the PR's worktree; the validated findings object comes back directly.
+   - Prompt template (`<base>` = PR base, e.g. `develop`):
      ```
-     `--wait` makes the script run synchronously and print the full structured review to stdout; detach via Bash `run_in_background: true` so the king isn't blocked (the task output file holds the verbatim review when it finishes).
-2. The `review` skill JUDGES only: classify findings BLOCKING/SHOULD/NIT/OUT-OF-SCOPE → verdict APPROVE/COMMENT/BLOCKING. Uphold/downgrade/escalate codex calls.
+     You are an independent adversarial code reviewer running as an Opus subagent at
+     MAX reasoning effort. You did NOT write this code — your job is to break it.
+
+     Read the diff first:  git diff <base>...HEAD   (run from the worktree)
+     Read surrounding source for context as needed.
+
+     Review for: correctness bugs · concurrency / transaction hazards · null / edge
+     cases · security · and every stack house rule (see the stack skills + coding-principles).
+     Challenge the DESIGN and APPROACH, not just line-level defects. Look past the diff
+     for cross-unit breakage the change arms (e.g. now-invalid callers elsewhere).
+
+     Return the structured findings object (schema-enforced):
+     verdict <APPROVE|COMMENT|BLOCKING> · summary · findings[] (each: severity + file:line
+     + defect + concrete failure scenario) · confidence <high|medium|low>.
+     ```
+2. The `review` skill JUDGES only: classify findings BLOCKING/SHOULD/NIT/OUT-OF-SCOPE → verdict APPROVE/COMMENT/BLOCKING. Uphold/downgrade/escalate the reviewer's calls.
 3. Write `RR-T-NNNN-R` (round R, immutable). Round 1 BLOCKING → fix → re-review. **At the 2nd consecutive BLOCKING, defer to Technoking** (never auto-loop to round 3): trivial-fix → round 3 (still BLOCKING → escalate) · `pattern_stuck` → rescue · default → restart from design (large → Design Stop only). See `orchestration-guide`.
 
-## codex unavailable
-Not a global halt (G0). Only the affected lane pauses and notifies the king; the main conversation and other lanes continue. **Never merge without a completed codex review.**
+## Reviewer subagent fails
+A transient agent/API error is not a global halt (G0). Retry once; on repeated failure only the affected lane pauses and notifies the king — the main conversation and other lanes continue. **Never merge without a completed review.**
 
 ## Auto-rescue (no user approval)
 Triggers: `error_2x` (the lane's own test runner sees the same failure twice) or `pattern_stuck` (same BLOCKING 2 rounds). The lane detects failure directly — no SHA-1 inbox protocol.
@@ -28,4 +46,4 @@ Triggers: `error_2x` (the lane's own test runner sees the same failure twice) or
 - Run the `rescue` skill **≤1 per ticket per signature**, never rescue-of-a-rescue. Failure → escalate to user.
 
 ## Pipeline
-codex review → (BLOCKING) fix → re-review … **2nd consecutive BLOCKING → king's call**: round 3 (→ escalate) / `rescue` (error_2x · pattern_stuck → validation via RV ticket + rescue branch → re-review) / restart from design (large → Design Stop only). PASS → continue; FAIL → user.
+review → (BLOCKING) fix → re-review … **2nd consecutive BLOCKING → king's call**: round 3 (→ escalate) / `rescue` (error_2x · pattern_stuck → validation via RV ticket + rescue branch → re-review) / restart from design (large → Design Stop only). PASS → continue; FAIL → user.

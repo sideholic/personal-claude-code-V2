@@ -56,7 +56,7 @@
 | `phase.entered` | `{phase}` — `classify\|spec\|decompose\|build\|converge\|merge` | 피처 진행 표시 |
 | `stop.requested` | `{phase, kind, summary}` — kind=`prd\|design\|merged-spec\|batch` | "승인 대기" 배지 |
 | `stop.resolved` | `{kind, decision}` | 배지 해제 |
-| `escalation.raised` | `{reason, detail}` — reason=`requirements_change\|architectural_change\|untestable_ac\|codex_unavailable\|rescue_failed\|review_3x_blocking\|other` | 경고 표시 |
+| `escalation.raised` | `{reason, detail}` — reason=`requirements_change\|architectural_change\|untestable_ac\|reviewer_unavailable\|rescue_failed\|review_3x_blocking\|other` | 경고 표시 |
 
 ### Tier 1 — 티켓 라이프사이클 (피드/타임라인)
 > **주의**: 이 `ticket.*` 이벤트는 이제 디렉터리 전이를 **미러링**한다(`ticket-transition.sh`가 디렉터리 이동과 함께 emit). 보드 컬럼의 권위 소스가 아니라 **라이브 피드·타임라인**을 구동한다. 컬럼은 디렉터리가, 이벤트는 그 이동의 알림이 결정한다. "→ 컬럼"은 해당 이벤트가 대응하는 디렉터리 상태일 뿐.
@@ -79,7 +79,7 @@
 ### Tier 2b — review/rescue 상세 (선택, 더 풍부)
 | `event` | `data` |
 |---|---|
-| `review.round` | `{round, verdict, codex_job_id, findings}` — verdict=`APPROVE\|COMMENT\|BLOCKING`, findings=`{blocking,should,nit,oos}` 카운트 |
+| `review.round` | `{round, verdict, reviewer_agent_id, findings}` — verdict=`APPROVE\|COMMENT\|BLOCKING`, findings=`{blocking,should,nit,oos}` 카운트 |
 | `rescue.triggered` | `{trigger, error_signature}` — trigger=`error_2x\|pattern_stuck` |
 | `rescue.resolved` | `{validation_ticket}` |
 | `rescue.failed` | `{reason}` |
@@ -150,7 +150,7 @@
 {"v":1,"seq":6,"ts":"2026-06-15T23:51:00+09:00","event":"stage.completed","feature":"T-0006","ticket":"T-0007","actor":"skill:qa","data":{"skill":"qa","stage":"qa-pre","summary":"3 fail-first AC tests committed RED"}}
 {"v":1,"seq":7,"ts":"2026-06-15T23:51:01+09:00","event":"stage.started","feature":"T-0006","ticket":"T-0007","actor":"skill:backend","data":{"skill":"backend","stage":"impl"}}
 {"v":1,"seq":8,"ts":"2026-06-15T23:55:00+09:00","event":"ticket.review","feature":"T-0006","ticket":"T-0007","actor":"skill:review","data":{"pr":42,"round":1}}
-{"v":1,"seq":9,"ts":"2026-06-15T23:57:00+09:00","event":"review.round","feature":"T-0006","ticket":"T-0007","actor":"skill:review","data":{"round":1,"verdict":"APPROVE","codex_job_id":"cx_abc","findings":{"blocking":0,"should":1,"nit":2,"oos":0}}}
+{"v":1,"seq":9,"ts":"2026-06-15T23:57:00+09:00","event":"review.round","feature":"T-0006","ticket":"T-0007","actor":"skill:review","data":{"round":1,"verdict":"APPROVE","reviewer_agent_id":"rv_abc","findings":{"blocking":0,"should":1,"nit":2,"oos":0}}}
 {"v":1,"seq":10,"ts":"2026-06-15T23:58:00+09:00","event":"ticket.done","feature":"T-0006","ticket":"T-0007","actor":"king","data":{"merge_commit":"a1b2c3d"}}
 ```
 

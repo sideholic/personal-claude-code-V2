@@ -5,4 +5,4 @@ argument-hint: <change>
 
 Run the `/task` shortcut in `orchestration-guide` for: $ARGUMENTS
 
-classify (= small) → a single **inline background lane** (qa-pre → impl → codex review + rescue) → Technoking `--squash` merge. 0 stops; review/rescue/merge gates still apply.
+classify (= small) → a single **inline background lane** (qa-pre → impl → reviewer subagent + rescue) → Technoking `--squash` merge. 0 stops; review/rescue/merge gates still apply.

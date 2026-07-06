@@ -8,11 +8,13 @@ model: claude-opus-4-8
 # 추론 effort (역할별)
 effort:
   technoking: xhigh  # 패널/메인 루프 — xhigh 통일(사용자 결정). 비차단은 구조적 보장(일=백그라운드), effort와 무관
-  subagent: xhigh    # 백그라운드 스킬(design/BE/FE/review/qa) — 패널 effort(xhigh) 상속
+  subagent: xhigh    # 백그라운드 스킬(design/BE/FE/qa) — 패널 effort(xhigh) 상속
+  reviewer: max      # 리뷰어 서브에이전트만 max — 구현자보다 깊게. Workflow agent({effort:'max'}) 로만 반영됨
 
 review:
-  reviewer: codex          # 단독 리뷰어. Claude self-review 금지 (planning §8)
-  hard_dependency: true    # codex 미준비 시 해당 리뷰 레인만 보류 (전체 halt 아님, G0)
+  reviewer: opus-subagent  # 독립 리뷰어 서브에이전트(Claude Opus, effort max). Claude self-review 금지 (planning §8)
+  reviewer_model: claude-opus-4-8
+  reviewer_effort: max     # per-agent max 는 Workflow agent() 에서만 반영 (Agent 툴엔 effort 파라미터 없음)
   max_blocking_rounds: 3
   in_lane_timeout_min: 30  # 행(hang) 가드 — 초과 시 에스컬레이션 반환
 
@@ -27,6 +29,3 @@ verify:
 
 dashboard:
   events_log: .claude-team/events.jsonl  # append-only, hybrid granularity (docs/events-contract.md)
-
-codex:
-  verified_at: null        # /codex:setup 통과 시 기록

@@ -9,7 +9,7 @@
 
 v1의 **과잉 하네스(fswatch 데몬·워치독·페인 바인딩 워커·inbox 폴링)** 를 전부 걷어내고,
 **메인 루프에서 절대 멈추지 않는 테크노킹 1명**이 겹치지 않는 작업을 **백그라운드 dynamic workflow / 서브에이전트**로 동시 fan-out 하는 구조로 재설계한다.
-티켓 데이터 모델·git-flow·codex 리뷰·페르소나 전문성은 유지하되, 전달 메커니즘을 **페인-바인딩 에이전트 → 워크플로우가 호출하는 스킬**로 바꾼다.
+티켓 데이터 모델·git-flow·리뷰어 서브에이전트 리뷰·페르소나 전문성은 유지하되, 전달 메커니즘을 **페인-바인딩 에이전트 → 워크플로우가 호출하는 스킬**로 바꾼다.
 
 **★ 본질은 '빠름'이다.** 역할·작업분배를 **'스킬 호출'로 명확히 지정**하고, 비충돌 작업을 **개수 제한 없는 opus 서브에이전트**로 동시 처리해 구현 시간을 획기적으로 단축한다. 무거운 다단계 fan-out일 때만 dynamic workflow를 쓰고, 그 외엔 인라인 서브에이전트로 가볍게 — 어느 경우든 메인 킹은 안 막힌다. 시각화(로컬 대시보드)로 이 동시 작업을 한눈에 모니터링한다.
 
@@ -24,7 +24,7 @@ v1(`personal-claude`)은 "7명 회사" 모델로 잘 동작했지만 다음 한�
 | L1 | **과잉 하네스 엔지니어링** | `workflows/bin/` 9개 스크립트 ~57KB. 그중 ~50KB가 "이벤트 루프 흉내": `ticket-watchdog.sh`(354줄, 6-신호 stuck 분류기), `worker-idle.sh`(240줄, bash 잡러너), fswatch 데몬 2개 + `Monitor(tail -F wake.log)` wake 채널. 전부 *페인에 떨어진 별도 OS 프로세스가 끝났는지*를 터미널 스크래핑으로 추론하려는 코드. |
 | L2 | **티켓 1개 = 페인 1개 바인딩** | 고정 5-페인(`worker-be/fe/qa/review`), 코드 생산 페인은 2개뿐 → BE/FE 동시성이 파일 비충돌이어도 **2로 캡**. |
 | L3 | **느린 간접 디스패치** | 큐 파일 드롭 → 30s 폴링 → atomic claim → headless `claude` exec → `INBOX-*.json` → fswatch → wake.log → Monitor wake → inbox drain. 한 이벤트에 3~5 홉. |
-| L4 | **codex를 감싼 무거운 비동기 래퍼** | codex 자체가 아니라 *비차단 dispatch → `/codex:result` 매 턴 폴링 → RR placeholder → 30분 타임아웃 escalation* 의 하네스가 문제. |
+| L4 | **외부 리뷰어(codex)를 감싼 무거운 비동기 래퍼** | (v1 회고) 리뷰어 자체가 아니라 *비차단 dispatch → 결과 매 턴 폴링 → RR placeholder → 30분 타임아웃 escalation* 의 하네스가 문제였음. v2 는 외부 CLI 리뷰어를 폐기하고 in-lane Opus 서브에이전트로 대체해 이 하네스를 통째로 제거. |
 | L5 | **모델 불일치** | `config.yml`(sonnet) vs `agents/*.md`(opus effort:medium) vs `worker-idle.sh`(sonnet default) — 출처 3곳 모순. |
 | L6 | **지침 비대** | 코퍼스 ~194KB. `technoking.md` 21KB, CLAUDE.md 7.9KB. 대부분이 *삭제 대상 하네스* 설명. |
 | L7 | **티켓 시각화 부재** | 텍스트 `/status` 보드뿐. |
@@ -60,7 +60,7 @@ v1(`personal-claude`)은 "7명 회사" 모델로 잘 동작했지만 다음 한�
 | **대시보드** | 로컬 웹 보드 자체 구현, **별도 git repo로 분리 관리**. 플러그인은 `tickets/*` + `events.jsonl` 피드만 내보냄 | multica는 Postgres 전용이라 직접 연동 불가 → 스타일만 차용 |
 | **동시성 주력** | 단일 **비차단** 메인 킹 + 백그라운드 dynamic workflow / 병렬 서브에이전트 | G0+G4 |
 | **멀티 테크노킹** | `setup-team` 이 **기본 3-pane** 킹 **독립 세션**(`claude-team`) 부트스트랩(pane 0 메인 + 로드 시 `/workflows:handoff --resume` 자동, 1·2 추가 킹). `CLAUDE_TEAM_KINGS` 조절·**무제한 확장**. atomic 카운터 + `merge-gate.sh` 직렬화로 충돌 0 | G6 |
-| **코드 리뷰어** | **codex 고정**. "Claude가 짠 코드를 Claude가 리뷰"는 부적절 → 외부 어드버서리얼 리뷰 유지 | 단, 데몬/폴링 하네스 제거, 백그라운드 레인 내 **동기 await** |
+| **코드 리뷰어** | **독립 리뷰어 서브에이전트 고정**(Claude Opus, `effort: 'max'`). 구현자와 분리된 fresh 컨텍스트+적대 프롬프트로 "자기 코드 자기 리뷰" 회피, 구현자보다 높은 effort 로 더 깊게 | 데몬/폴링 하네스 제거, 백그라운드 레인 내 **동기 await**(Workflow `agent({effort:'max'})`) |
 | **지침 분량** | 글자수 제한 **없음**. karpathy 스타일 — 간략·핵심·간결 | G9 |
 | **모델** | 전 워크플로우/스킬 = **최신 opus** 단일 출처 | G7 |
 | **언어** | 사용자 산출물(PRD/Design/ADR/커밋·PR 본문/리뷰 요약) = 한국어, 내부(스킬·티켓·코드·커맨드·frontmatter) = 영어. KST ISO-8601 | v1 유지 |
@@ -95,7 +95,7 @@ user ⇄ Technoking(메인 루프, opus, 절대 비차단)
         ├─  동시성 플래너: 분해된 티켓들의 files_in_scope[] 교집합 계산 → 최대 비충돌 집합
         │
         ├─▶ [BG] fan-out: 비충돌 유닛마다 1개 워크트리(.worktrees/T-NNNN, feat/T-NNNN-<slug>)에서
-        │        per-unit 파이프라인 { QA-pre(fail-first 테스트) → 구현(BE/FE skill) → codex 리뷰(동기 await) }
+        │        per-unit 파이프라인 { QA-pre(fail-first 테스트) → 구현(BE/FE skill) → 리뷰어 서브에이전트 리뷰(동기 await) }
         │        (겹치는 유닛은 depends_on[] 으로 순차)
         │        └ 각 스킬은 구조화된 결과(아티팩트/verdict/error)를 RETURN — inbox·sentinel·폴링 없음
         │
@@ -112,7 +112,7 @@ user ⇄ Technoking(메인 루프, opus, 절대 비차단)
 
 - **백그라운드 워크플로우**: `Workflow`는 호출 즉시 task ID 반환, 완료 시 notification. 무거운 다단계 fan-out의 주력.
 - **백그라운드 서브에이전트 / Bash**: `run_in_background`로 단일 유닛·빠른 작업 오프로드.
-- **킹이 동기 await 하는 것은 없음**: codex 리뷰의 동기 await는 *백그라운드 레인(워크플로우) 내부*에서 일어나고, 킹 자신은 그 워크플로우를 백그라운드로 띄워 막히지 않는다.
+- **킹이 동기 await 하는 것은 없음**: 리뷰어 서브에이전트 리뷰의 동기 await는 *백그라운드 레인(워크플로우) 내부*에서 일어나고, 킹 자신은 그 워크플로우를 백그라운드로 띄워 막히지 않는다.
 - **결과 수신**: 모든 완료/실패는 notification으로 킹에 전달 → 킹은 그때 사용자에게 보고하거나 다음 단계를 디스패치.
 
 ### 4.3 공유 가변 상태 (멀티 테크노킹 안전)
@@ -170,7 +170,7 @@ events.jsonl          ← 대시보드용 append-only 이벤트 (신규)
 | Persistence Paladin | **스킬** `backend` | BE | 서버 코드+테스트·PR |
 | Pixel Wizard | **스킬** `frontend` | FE | UI 코드+테스트·PR |
 | What-If Witch | **스킬** `qa` (2-phase) | QA | fail-first AC 테스트 + 통합/E2E |
-| The Roastmaster | **스킬** `review` | review | codex dispatch + verdict 판정 → RR |
+| The Roastmaster | **스킬** `review` | review | 리뷰어 서브에이전트(opus/max) dispatch + verdict 판정 → RR |
 
 - 테크노킹만 에이전트. 나머지 6은 워크플로우가 호출하는 스킬.
 - 스킬은 stateless-per-ticket, 단일 책임, discrete 아티팩트 반환 → 워크플로우 fan-out에 최적.
@@ -190,25 +190,25 @@ events.jsonl          ← 대시보드용 append-only 이벤트 (신규)
                           ── Stop: large=PRD승인 then Design승인(이중, SSOT) / medium=PRD+Design 통합 1회 / small=skip
 3  분해 + 동시성 플래닝   (킹 — files_in_scope[] 교집합 → 최대 비충돌 집합, depends_on[] 순차, T-NNNN flock)
                           ── Stop: large=batch 승인 / 그 외 없음
-4  build fan-out         [BG, 병렬] 유닛마다 1 워크트리: qa-pre(fail-first, red 선커밋) → 구현(BE/FE) → codex 리뷰(레인 내 동기 await)
+4  build fan-out         [BG, 병렬] 유닛마다 1 워크트리: qa-pre(fail-first, red 선커밋) → 구현(BE/FE) → 리뷰어 서브에이전트 리뷰(레인 내 동기 await)
                           + in-lane rescue(error_2x/pattern_stuck, ≤1/티켓·시그니처) · Stop 없음
 5  converge              [BG] 유닛 간 통합/E2E 배리어 (large 기본 / medium=AC 요구 시 / small·task skip; auto-large는 강제 ON)
                           · 모든 레인 APPROVE 후 발동 · green CI + 전 AC 체크 = 머지 선행조건 · Stop 없음
 6  merge + report        (킹 단독 --squash, pre-merge 체크리스트 → done/, 워크트리 제거, events.jsonl, 한국어 리포트)
 ```
 
-**왜 6인가 (11→6 매핑):** 2+3+4+5(PRD·승인·Design·승인) → 페이즈 2 한 파이프라인(승인은 *별도 행*이 아니라 페이즈 내부 체크포인트). 7+8+9(fail-first·구현·리뷰) → 페이즈 4 per-unit 레인 하나로(원래 글로벌 배리어 3개였던 게 벽시계 낭비의 핵심 — 유닛 A가 codex 리뷰 중일 때 유닛 B는 red 테스트 작성 중일 수 있다). rescue → 페이즈 4 안의 조건 분기(데몬·inbox 없음, 레인이 실패를 직접 봄). 1·6·10·11은 그대로(분류 두뇌·동시성 두뇌·수렴 배리어·머지 게이트는 load-bearing).
+**왜 6인가 (11→6 매핑):** 2+3+4+5(PRD·승인·Design·승인) → 페이즈 2 한 파이프라인(승인은 *별도 행*이 아니라 페이즈 내부 체크포인트). 7+8+9(fail-first·구현·리뷰) → 페이즈 4 per-unit 레인 하나로(원래 글로벌 배리어 3개였던 게 벽시계 낭비의 핵심 — 유닛 A가 리뷰어 서브에이전트 리뷰 중일 때 유닛 B는 red 테스트 작성 중일 수 있다). rescue → 페이즈 4 안의 조건 분기(데몬·inbox 없음, 레인이 실패를 직접 봄). 1·6·10·11은 그대로(분류 두뇌·동시성 두뇌·수렴 배리어·머지 게이트는 load-bearing).
 
 **복잡도별 변형:**
-- **small** → `/task`: 1 → (4 단일 인라인 레인) → 6. **0 Stop.** 2·3·5 skip. 단, fail-first·codex 리뷰·rescue·머지 게이트는 레인 안에서 전부 발동(리뷰 스킵 아님).
+- **small** → `/task`: 1 → (4 단일 인라인 레인) → 6. **0 Stop.** 2·3·5 skip. 단, fail-first·리뷰어 서브에이전트 리뷰·rescue·머지 게이트는 레인 안에서 전부 발동(리뷰 스킵 아님).
 - **medium** → 1 → 2(**1 Stop**: PRD+Design 통합) → 3(batch Stop 없음) → 4(≥2 비충돌 유닛이면 Workflow, 아니면 인라인) → 5(AC가 통합 요구 시만) → 6.
 - **large** → 1 → 2(**2 Stop**: PRD승인 → Design승인, SSOT 이중 경계) → 3(**batch 승인 Stop**) → 4(무거운 dynamic Workflow, 비충돌 유닛마다 워크트리·opus 서브에이전트, 무제한) → 5(기본 ON) → 6. **총 3 Stop.**
 
-**Stop 정책 (B-패턴, 정확히 보존):** small=0 / medium=1 / large=3. **머지 직전 Stop 없음.** 마지막 승인(large=3절 batch / medium=2절 통합) 후 페이즈 4–6 **자율**(사용자 인터럽트 = 암묵 동의). large의 PRD·Design 이중 Stop은 한 페이즈 안의 **두 개의 순차 체크포인트**로 명시 — 절대 하나로 합치지 않는다(§3 불변식). 강제 에스컬레이션(정책 무관, 항상 알림/Stop): requirements_change·architectural_change·untestable_ac, mid-flight auto-large(누락 Stop 삽입), 리뷰 3R 연속 BLOCKING, rescue 검증 실패, codex 미준비(해당 레인만 보류·킹 통지, 메인 대화 계속, codex 리뷰 없이 머지 금지).
+**Stop 정책 (B-패턴, 정확히 보존):** small=0 / medium=1 / large=3. **머지 직전 Stop 없음.** 마지막 승인(large=3절 batch / medium=2절 통합) 후 페이즈 4–6 **자율**(사용자 인터럽트 = 암묵 동의). large의 PRD·Design 이중 Stop은 한 페이즈 안의 **두 개의 순차 체크포인트**로 명시 — 절대 하나로 합치지 않는다(§3 불변식). 강제 에스컬레이션(정책 무관, 항상 알림/Stop): requirements_change·architectural_change·untestable_ac, mid-flight auto-large(누락 Stop 삽입), 리뷰 3R 연속 BLOCKING, rescue 검증 실패, 리뷰어 서브에이전트 반복 실패(1회 재시도 후에도 실패 시 해당 레인만 보류·킹 통지, 메인 대화 계속, 리뷰 없이 머지 금지).
 
-**디스패치 규칙 (G5):** dynamic workflow는 **≥2 비충돌 유닛일 때만**. 단일 유닛·`/task` = 인라인 BG 서브에이전트(의식 없음). 비차단(G0): 모든 [BG]는 run_in_background, 킹은 디스패치 직후 즉시 사용자 복귀. 시스템에서 진짜 동기 await는 codex 리뷰 하나뿐 — 그건 **레인 내부**에서 일어나고 킹은 그 레인을 BG로 띄워 안 막힌다.
+**디스패치 규칙 (G5):** dynamic workflow는 **≥2 비충돌 유닛일 때만**. 단일 유닛·`/task` = 인라인 BG 서브에이전트(의식 없음). 비차단(G0): 모든 [BG]는 run_in_background, 킹은 디스패치 직후 즉시 사용자 복귀. 시스템에서 진짜 동기 await는 리뷰어 서브에이전트 리뷰 하나뿐 — 그건 **레인 내부**에서 일어나고 킹은 그 레인을 BG로 띄워 안 막힌다.
 
-**품질 게이트 (복잡도·페이즈 무관 불변):** PR마다 codex 리뷰(codex 단독 리뷰어 — small·medium=일반 `/codex:review`, large=적대적 `/codex:adversarial-review`), 전 AC 체크 통과, green CI, **테크노킹 단독 squash 머지** + pre-merge 체크리스트.
+**품질 게이트 (복잡도·페이즈 무관 불변):** PR마다 리뷰어 서브에이전트 리뷰(독립 Opus/max 리뷰어 — small·medium=일반 단일패스, large=적대적), 전 AC 체크 통과, green CI, **테크노킹 단독 squash 머지** + pre-merge 체크리스트.
 
 ### 복잡도 판정 (라우팅 두뇌)
 
@@ -219,11 +219,11 @@ events.jsonl          ← 대시보드용 append-only 이벤트 (신규)
 
 ---
 
-## 8. 코드 리뷰 & rescue (codex 고정, 하네스 제거)
+## 8. 코드 리뷰 & rescue (독립 리뷰어 서브에이전트, 하네스 제거)
 
-- **리뷰어 = codex**, 가중치별 **2모드**: small·medium → 일반 `/codex:review`(빌트인 리뷰어, `general-review-bridge`); large → 적대적 `/codex:adversarial-review`(`adversarial-review-bridge`). auto-large 트리거(auth·DB 마이그레이션·신규 도메인·외부)는 복잡도를 large로 강제하므로 자동으로 적대적. Roastmaster 스킬은 어느 모드든 diff를 직접 보지 않고 codex 결과를 **판정**(uphold/downgrade/escalate)·분류(BLOCKING/SHOULD/NIT/OUT-OF-SCOPE) → verdict(APPROVE/COMMENT/BLOCKING), RR에 사용 모드 기록.
-- **하네스 제거**: 비차단 dispatch + `/codex:result` 폴링 + RR placeholder + `.runtime` sentinel + 30분 타임아웃 데몬 삭제. 대신 **백그라운드 리뷰 워크플로우 내부에서 codex 결과를 동기 await** (킹은 그 워크플로우를 BG로 띄워 안 막힘).
-- **codex 미준비 처리**: 전체 halt 금지(G0). 해당 리뷰 레인만 보류 → 에스컬레이션을 킹에 notification → 킹이 사용자에게 안내(`/codex:setup`). 메인 대화는 계속 가능.
+- **리뷰어 = 독립 리뷰어 서브에이전트**(Claude Opus, `effort: 'max'` — 구현자와 분리된 fresh 컨텍스트·적대 프롬프트, 구현자(xhigh)보다 높은 max effort 로 더 깊게). 가중치별 **2모드**: small·medium → 일반 단일패스 리뷰(`general-review-bridge`); large → 적대적(설계·접근 도전) 리뷰(`adversarial-review-bridge`). auto-large 트리거(auth·DB 마이그레이션·신규 도메인·외부)는 복잡도를 large로 강제하므로 자동으로 적대적. Roastmaster 스킬은 어느 모드든 diff를 직접 보지 않고 리뷰어 결과를 **판정**(uphold/downgrade/escalate)·분류(BLOCKING/SHOULD/NIT/OUT-OF-SCOPE) → verdict(APPROVE/COMMENT/BLOCKING), RR에 사용 모드 기록.
+- **하네스 제거**: 비차단 dispatch + 결과 폴링 + RR placeholder + `.runtime` sentinel + 30분 타임아웃 데몬 삭제. 대신 **백그라운드 리뷰 워크플로우 내부에서 리뷰어 서브에이전트 결과를 동기 await**. per-agent max effort 는 **Workflow `agent({model:'opus', effort:'max'})` 에서만** 반영됨(Agent 툴엔 effort 파라미터 없음 → 세션 effort 상속) → 리뷰는 항상 워크플로우 레인 안에서 스폰. 킹은 그 워크플로우를 BG로 띄워 안 막힘.
+- **리뷰어 실패 처리**: 전체 halt 금지(G0). 일시적 agent/API 오류는 1회 재시도 → 반복 실패 시 해당 리뷰 레인만 보류 → 에스컬레이션을 킹에 notification. 메인 대화는 계속 가능. 외부 CLI 준비 게이트는 없음.
 - **rescue**: 6-step 상태머신 → 1개 `rescue` 스킬로 축소. 불변식 유지(티켓·시그니처당 ≤1, 초과 시 사용자, rescue의 rescue 금지). `error_signature` 수동 SHA-1 + `kind:error_2x` inbox 프로토콜 삭제 — 워크플로우가 실패를 직접 본다.
 - **BLOCKING 라운드 정책**: 1라운드 BLOCKING → fix → re-review. **2회 연속 BLOCKING** 도달 시 테크노킹 단독 판단(레인은 round 3로 자동 루프 금지) — ⓐ **trivial-fix**면 round 3 허용(round 3도 BLOCKING이면 escalate), ⓑ **`pattern_stuck`**(같은 BLOCKING 반복)이면 auto-rescue 유지(≤1/ticket/sig, rescue의 rescue 금지), ⓒ **기본(설계·접근 문제)**이면 **design부터 재진행**(phase 2 재진입) — large 티켓은 이때 **Design Stop만** 재발생(PRD 승인은 유지). 라운드·verdict는 RR 기록, 재진행/루프 결정은 킹 단독.
 
@@ -287,7 +287,7 @@ personal-claude-code-v2/            (이 repo)
 | **P3** | 스킬 6종(prd·design·backend·frontend·qa·review) + core 3종(coding·testing·documentation) | ✅ |
 | **P4** | `orchestration-guide`(6페이즈) + `technoking` 에이전트 | ✅ |
 | **P5** | 커맨드 12종 (스킬 위임) | ✅ |
-| **P6** | `adversarial-review-bridge`(codex 동기·데몬 제거) + `rescue` 스킬 | ✅ |
+| **P6** | `adversarial-review-bridge`(in-lane Opus 리뷰어 동기·데몬 제거) + `rescue` 스킬 | ✅ |
 | **P7** | stacks 오버레이(kotlin-spring·nextjs) + 훅(block-dangerous·stop-verification, hooks.json 명시) — 테스트 통과 | ✅ |
 | **P8** | 대시보드(별도 repo `personal-claude-code-dashboard`): Next.js 16 라이브 보드, events.jsonl SSE — 빌드+E2E 검증 | ✅ |
 | **P9** | 멀티 테크노킹: `setup-team` 3-pane 부트스트랩(pane 0 auto `handoff --resume`) + `merge-gate.sh`(flock 직렬화) + `king-pane.sh`(추가 pane) — 직렬화 검증 | ✅ |
@@ -303,12 +303,12 @@ personal-claude-code-v2/            (이 repo)
 - **stacks 범위** → **kotlin-spring + nextjs 둘 다 유지(간략화)** (P7).
 
 ### 남은 미해결
-- **in-lane codex 타임아웃 가드**: 데몬(30분 워치독)은 삭제하되, **레인 내부 타임아웃 가드는 유지** — 행(hang)된 codex가 워크트리를 영구 점유하지 않도록 에스컬레이션 반환. (기본값 30분, 실측 조정)
+- **in-lane 리뷰어 타임아웃 가드**: 데몬(30분 워치독)은 삭제하되, **레인 내부 타임아웃 가드는 유지** — 행(hang)된 리뷰어 서브에이전트가 워크트리를 영구 점유하지 않도록 에스컬레이션 반환. (기본값 30분, 실측 조정)
 - **files_in_scope[] 정확도 의존**(잔여 리스크): 보수적 정책으로도 *늦은 쓰기 충돌* 가능 → 페이즈 5 수렴 배리어 + 페이즈 경계 킹 재평가로 완화.
 - **fat lane 컨텍스트 압박**: qa-pre+구현+리뷰를 한 인라인 서브에이전트에 몰면 큰 유닛은 압박 → 컨텍스트 예산 가드로 레인 분할 필요할 수 있음.
 - **서브에이전트 동시 캡**: 설계상 무제한이나 단일 Workflow 런타임 캡(~16) 존재 → 폭 넓으면 큐잉/여러 BG 워크플로우 분산. 킹은 어느 경우든 안 막힘.
 - **멀티 테크노킹 머지 게이트 경합 (P9)**: 동일 main 동시 squash 시 **T-counter flock 외 머지 게이트 전용 flock** 필요. 멀티킹 활성화 전 해결 전제.
-- **codex 미준비 UX**: 안내 문구·재시도. 폭 넓은 fan-out은 codex 호출이 유닛 수만큼 증가 → 비용·레이트리밋 `/status` 가시화.
+- **리뷰어 비용 UX**: 폭 넓은 fan-out은 Opus/max 리뷰어 호출이 유닛 수만큼 증가 → 토큰 비용·레이트리밋 `/status` 가시화.
 
 ---
 

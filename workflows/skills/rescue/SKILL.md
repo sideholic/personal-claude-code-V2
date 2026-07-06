@@ -1,6 +1,6 @@
 ---
 name: rescue
-description: One-shot rescue skill — when a build lane fails twice (error_2x) or a reviewer is pattern_stuck, dispatch codex rescue, validate the patch, and re-review. At most once per ticket per signature; never rescue a rescue.
+description: One-shot rescue skill — when a build lane fails twice (error_2x) or a reviewer is pattern_stuck, dispatch a rescue subagent, validate the patch, and re-review. At most once per ticket per signature; never rescue a rescue.
 ---
 
 # Rescue
@@ -8,8 +8,8 @@ description: One-shot rescue skill — when a build lane fails twice (error_2x) 
 Invoked by a lane on `error_2x` / `pattern_stuck` (see `adversarial-review-bridge`). Goal: unstick the lane without the user.
 
 1. **De-dup**: skip if a rescue already ran for this ticket + `error_signature`. On trigger, bump the counter (no status change): `bin/ticket-transition.sh T-NNNN --bump-rescue`.
-2. **Dispatch** `/codex:rescue` (error_signature in the prompt) on a `rescue/T-NNNN` branch.
+2. **Dispatch** a rescue subagent (`model: opus`, `effort: 'max'` — rescue is the hard-case path; spawn via the Workflow `agent()` primitive so max effort is honored) on a `rescue/T-NNNN` branch. Give it the `error_signature`, the failing AC/test, and the stuck diff; a fresh context often sees what the stuck lane cannot.
 3. **Validate** the returned patch: open an `RV-NNNN` validation ticket (no new feature work), run the failing AC tests / build.
-4. PASS → re-review (codex) → continue the lane. FAIL → **escalate to user** (never auto-retry a rescue).
+4. PASS → re-review (independent reviewer subagent) → continue the lane. FAIL → **escalate to user** (never auto-retry a rescue).
 
 Record a `RESCUE-<ts>` artifact. Emit `rescue.triggered` / `rescue.resolved` / `rescue.failed`.

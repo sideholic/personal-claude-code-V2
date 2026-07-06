@@ -1,6 +1,6 @@
 # personal-claude-code v2
 
-Claude Code를 "회사처럼" 운영하는 플러그인. 메인의 Technoking 1명이 작업을 스킬로 분배하고, 겹치지 않는 작업은 백그라운드에서 동시 실행한다. 모든 PR은 codex 리뷰를 거쳐 머지된다.
+Claude Code를 "회사처럼" 운영하는 플러그인. 메인의 Technoking 1명이 작업을 스킬로 분배하고, 겹치지 않는 작업은 백그라운드에서 동시 실행한다. 모든 PR은 독립 리뷰어 서브에이전트(Claude Opus, max effort) 리뷰를 거쳐 머지된다.
 
 ## 설치
 
@@ -14,10 +14,11 @@ Claude Code를 "회사처럼" 운영하는 플러그인. 메인의 Technoking 1�
 ## 첫 실행
 
 ```
-/codex:setup     # codex CLI 인증 (필수 리뷰어)
 /setup-team      # .claude-team/ 디렉터리 + registry 생성
 /feat <요청>     # 기능 개발 시작
 ```
+
+리뷰어는 독립 리뷰어 서브에이전트(Claude Opus, `effort: 'max'`)라 외부 CLI 인증·준비 단계가 없다.
 
 ## 커맨드
 
@@ -27,7 +28,7 @@ Claude Code를 "회사처럼" 운영하는 플러그인. 메인의 Technoking 1�
 | `/task <변경>` | 소규모 단일 변경 (1–2 파일) |
 | `/design <기능>` | PRD·설계 문서만 (구현 전 중단) |
 | `/diagnose <버그>` | 버그 조사·원인·수정안 (구현 안 함) |
-| `/review <PR\|브랜치>` | codex 리뷰 재실행 |
+| `/review <PR\|브랜치>` | 리뷰어 서브에이전트 리뷰 재실행 |
 | `/status` | 티켓 보드 (텍스트) |
 | `/handoff` | 다음 세션용 컨텍스트 직렬화 |
 | `/cleanup` | 오래된 티켓 아카이브·워크트리 정리 |
@@ -48,7 +49,6 @@ Claude Code를 "회사처럼" 운영하는 플러그인. 메인의 Technoking 1�
 
 ## 요구사항
 
-- **codex CLI** — 리뷰어 (필수)
 - **python3** — 티켓 카운터·이벤트 emit
 - **git**
 - **tmux** — 멀티 Technoking(옵트인)에만 필요

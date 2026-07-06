@@ -12,7 +12,7 @@
     {
       "name": "workflows",
       "source": "./workflows",
-      "description": "Non-blocking Technoking orchestration: skill-dispatch, parallel git-flow worktrees, ticket model, codex review. Stack-agnostic core."
+      "description": "Non-blocking Technoking orchestration: skill-dispatch, parallel git-flow worktrees, ticket model, independent Opus reviewer subagent. Stack-agnostic core."
     },
     {
       "name": "stack-kotlin-spring",
