@@ -12,9 +12,9 @@ CHANGED="$( { git diff --name-only HEAD -- '*.ts' 2>/dev/null; git diff --name-o
   | sort -u | grep -vE '\.(test|spec)\.' || true )"
 [ -z "$CHANGED" ] && exit 0
 
-echo "[stop-verify] changed TS detected → vitest related" >&2
-# vitest related runs only the tests importing the changed files (true changed-file scope).
-if ! pnpm exec vitest related --run $CHANGED; then
+echo "[stop-verify] changed TS detected → jest --findRelatedTests" >&2
+# --findRelatedTests runs only the tests importing the changed files (true changed-file scope).
+if ! pnpm exec jest --findRelatedTests --passWithNoTests $CHANGED; then
   echo "[stop-verify] tests failed — not done. Fix or set CLAUDE_TEAM_SKIP_VERIFY=1 to override." >&2
   exit 2
 fi
