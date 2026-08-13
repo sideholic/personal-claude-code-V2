@@ -23,6 +23,11 @@
       "name": "stack-nextjs",
       "source": "./stacks/nextjs",
       "description": "Next.js (App Router) + TypeScript overlay: core conventions, data fetching, testing. Layers on the workflows core."
+    },
+    {
+      "name": "stack-nest",
+      "source": "./stacks/nest",
+      "description": "NestJS + TypeScript overlay: core conventions, data access (MikroORM), testing. Layers on the workflows core."
     }
   ]
 }
