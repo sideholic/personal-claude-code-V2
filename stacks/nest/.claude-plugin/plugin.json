@@ -7,5 +7,5 @@
     "email": "jundo1302@gmail.com"
   },
   "license": "MIT",
-  "keywords": ["nestjs", "typescript", "typeorm", "mysql", "stack-overlay"]
+  "keywords": ["nestjs", "typescript", "prisma", "mysql", "stack-overlay"]
 }

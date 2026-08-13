@@ -27,7 +27,7 @@
     {
       "name": "stack-nest",
       "source": "./stacks/nest",
-      "description": "NestJS + TypeScript overlay: core conventions, data access (TypeORM + MySQL), testing. Layers on the workflows core."
+      "description": "NestJS + TypeScript overlay: core conventions, data access (Prisma + MySQL), testing. Layers on the workflows core."
     }
   ]
 }

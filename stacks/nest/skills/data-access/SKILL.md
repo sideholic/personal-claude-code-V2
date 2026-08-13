@@ -1,13 +1,15 @@
 ---
 name: data-access
-description: Data access for NestJS — TypeORM (@nestjs/typeorm) + MySQL, transactions, migrations. Use when the backend skill writes or reviews repositories, ORM mappings, or DB migrations.
+description: Data access for NestJS — Prisma + MySQL, transactions, migrations. Use when the backend skill writes or reviews data models, queries, or DB migrations.
 ---
 
 # Data access
 
-- **TypeORM via `@nestjs/typeorm` + MySQL (mysql2 driver).** Repositories injected with `@InjectRepository`; transactions through `DataSource`/`EntityManager`.
-- **N+1 is BLOCKING.** Load relations explicitly (`relations` option / QueryBuilder joins); verify query count in a test.
-- Entities ≠ API DTOs — no entity leakage past the service layer.
-- Simple reads via repository find options; dynamic/complex queries via **QueryBuilder**. No hand-assembled SQL strings; raw SQL only where QueryBuilder cannot express it, always parameterized.
-- Multi-write use cases wrap in a single `dataSource.transaction(...)` at the application layer; keep transactions short. Concurrent writes on the same row use `setLock('pessimistic_write')` inside that transaction.
-- Migrations: **TypeORM migrations, forward-only, versioned.** `synchronize: false` everywhere except throwaway local dev.
+- **Prisma + MySQL.** One `PrismaService` (extends `PrismaClient`, `$connect` on module init) provided by a shared `PrismaModule` — the official Nest recipe. No per-feature clients.
+- `schema.prisma` is the single source of truth; rely on the generated client types end-to-end — no `any` casts around query results.
+- **N+1 is BLOCKING.** Fetch relations with `include`/nested `select` in one query (or rely on Prisma's batched relation loading) — never loop-and-query. Verify query count in a test.
+- Select what you need: explicit `select` on wide models/list endpoints — no blanket overfetch.
+- Prisma models ≠ API DTOs — map at the service boundary; never return Prisma models straight from controllers.
+- Multi-write use cases = one `$transaction` (interactive transaction for read-then-write flows); keep it short.
+- Raw SQL only where the client cannot express the query, via `$queryRaw` tagged templates (parameterized) — never string-concatenated SQL.
+- Migrations: **`prisma migrate`, forward-only, versioned** (`migrate dev` locally, `migrate deploy` in CI/prod). `db push` only for throwaway local experiments.
