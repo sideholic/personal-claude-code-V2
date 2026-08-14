@@ -3,7 +3,7 @@
 version: 2
 
 # G7: 전 스킬/서브에이전트 공통 모델 (단일 출처)
-model: claude-opus-4-8
+model: opus
 
 # 추론 effort (역할별)
 effort:
@@ -13,7 +13,7 @@ effort:
 
 review:
   reviewer: opus-subagent  # 독립 리뷰어 서브에이전트(Claude Opus, effort max). Claude self-review 금지 (planning §8)
-  reviewer_model: claude-opus-4-8
+  reviewer_model: opus
   reviewer_effort: max     # per-agent max 는 Workflow agent() 에서만 반영 (Agent 툴엔 effort 파라미터 없음)
   max_blocking_rounds: 3
   in_lane_timeout_min: 30  # 행(hang) 가드 — 초과 시 에스컬레이션 반환

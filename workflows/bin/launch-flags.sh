@@ -13,7 +13,7 @@ cfg() { # cfg <key-regex> → value with inline comment + surrounding ws strippe
   awk -v pat="$1" '$0 ~ pat { sub(/^[^:]*:[[:space:]]*/, ""); sub(/[[:space:]]*#.*$/, ""); gsub(/[[:space:]]/, ""); print; exit }' "$CFG"
 }
 
-MODEL="$(cfg '^model:')";                    MODEL="${MODEL:-claude-opus-4-8}"   # G7: latest opus
+MODEL="$(cfg '^model:')";                    MODEL="${MODEL:-opus}"   # G7: latest opus
 EFFORT="$(cfg '^[[:space:]]+technoking:')";  EFFORT="${EFFORT:-xhigh}"           # king effort (config SSOT) — uniform xhigh
 
 printf -- '--model %s --effort %s --dangerously-skip-permissions' "$MODEL" "$EFFORT"
