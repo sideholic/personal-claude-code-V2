@@ -6,6 +6,8 @@ version: 2
 model: opus
 
 # 추론 effort (역할별)
+kings: 2            # 프로젝트당 Technoking pane 수 (setup-team)
+
 effort:
   technoking: xhigh  # 패널/메인 루프 — xhigh 통일(사용자 결정). 비차단은 구조적 보장(일=백그라운드), effort와 무관
   subagent: xhigh    # 백그라운드 스킬(design/BE/FE/qa) — 패널 effort(xhigh) 상속
@@ -28,4 +30,5 @@ verify:
   stop_hook_scope: changed-files  # 변경 파일 관련 테스트만 (CI 중복 회피)
 
 dashboard:
+  port: 4317
   events_log: .claude-team/events.jsonl  # append-only, hybrid granularity (docs/events-contract.md)
