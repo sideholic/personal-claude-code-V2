@@ -8,8 +8,10 @@ description: How to run the general reviewer subagent (a single-pass Claude Opus
 The reviewer is the same **independent reviewer subagent** as `adversarial-review-bridge` — a separate Claude instance (`model: opus`, `effort: 'max'`) that Claude-the-implementer never is. This is the *general* (single-pass, line-level) review for light work; the *adversarial* pass (`adversarial-review-bridge`) additionally challenges design/approach and reaches for cross-unit breakage, and is reserved for heavier/risky tickets. The `review` skill picks the mode.
 
 ## Mode selection (the review skill decides)
-- **general** (this skill) — `complexity: small` or `medium`.
-- **adversarial** (`adversarial-review-bridge`) — `complexity: large` only. Every auto-large trigger (auth/permission · DB schema migration · new domain · external payment/legal) already forces `large`, so it lands in adversarial automatically.
+- **general** (this skill) — `complexity: small` or `medium`. **This is the default mode** — most PRs land here.
+- **adversarial** (`adversarial-review-bridge`) — `complexity: large`. Every auto-large trigger (auth/permission · DB schema migration · new domain · external payment/legal) already forces `large`, so it lands in adversarial automatically. A small/medium ticket is escalated to adversarial only on a named risk axis (irreversible shared-data mutation · lock/transaction change · trailing PR of parallel same-file lanes · design-level BLOCKING in a general round) — see the `review` skill's mode discipline; the reason goes into the RR.
+
+Cost reality: both modes use the same opus/max subagent, so general is not a cheaper model — it is a **narrower prompt** (diff + the files it touches; no sibling-screen sweep, no cross-repo contract hunt), which is what makes it 2–3× faster. Keep the general prompt narrow; if you find yourself asking the reviewer to "challenge the approach" or "look past the diff", you have switched modes — re-check the ticket's complexity instead.
 
 Either way: every PR gets exactly one review per round, and the king-only `--squash` merge gate is unchanged.
 
