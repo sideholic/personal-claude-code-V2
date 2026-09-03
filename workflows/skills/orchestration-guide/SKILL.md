@@ -34,6 +34,8 @@ small = 0 · medium = 1 (phase 2 merged spec) · large = 3 (PRD, Design, batch).
 - Everything that does work = `run_in_background` (`Workflow` / `Agent` / Bash). King returns to the user instantly; completion/escalation arrive as notifications.
 - Heavy dynamic `Workflow` **only when ≥2 non-overlapping units**. 1 unit or `/task` = single inline BG subagent (no Workflow ceremony) — but its review step is still spawned via `agent({effort:'max'})` inside a lane.
 - The one synchronous await (the reviewer subagent) lives INSIDE a lane; the king launched that lane in the background, so the king never blocks.
+- **External-environment work probes FIRST.** A ticket that drives an external system's live UI/DOM or third-party contract (browser macros, admin-panel automation) gets a **read-only live probe before the implementation dispatch** (with user authorization): capture the real DOM/contract and pin it into the ticket. Mocks cannot see the real environment — skipping the probe converts environment drift into review-round churn.
+- **Design-lane constraints freeze at dispatch.** Never append mid-flight addenda that retro-invalidate what the lane already wrote; if a constraint must change while a design lane runs, restart the lane with the updated constraints instead.
 
 ## Escalation (always surface, any tier)
 `requirements_change` · `architectural_change` · `untestable_ac` · review 3× BLOCKING · rescue validation fail · `reviewer_unavailable` (reviewer subagent fails after a retry — only that lane pauses; main convo + other lanes continue; never merge without a completed review). **Auto-rescue** (`error_2x` / `pattern_stuck`) fires WITHOUT user approval, ≤1 per ticket per signature, never rescue-of-a-rescue.
