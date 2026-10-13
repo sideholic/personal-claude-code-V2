@@ -9,5 +9,5 @@ description: Test framework + patterns for NestJS + TS — Vitest or Jest (which
 - Filter, don't run the full suite for one class: Vitest `pnpm exec vitest run <pattern>` · Jest `pnpm exec jest <pattern>`.
 - Unit: `Test.createTestingModule` (@nestjs/testing) with mocked providers (`useValue`/`useFactory`) — no DB, no containers. Specs co-located as `*.spec.ts`.
 - e2e/API: **Supertest** against `createNestApplication()` — `test/*.e2e-spec.ts`, run by the repo's separate e2e config (`pnpm test:e2e`).
-- **Testcontainers (`@testcontainers/mysql`)** for integration against real MySQL — no SQLite substitute for MySQL-specific behavior. Clean up containers on exit.
+- **Testcontainers (`@testcontainers/mysql`)** for integration against real MySQL — apply the repo's migrations (Drizzle/Prisma) to the container first; no SQLite substitute for MySQL-specific behavior. Clean up containers on exit.
 - One acceptance test per AC, fail-first. Verify-by-stash. Canonical: `pnpm test` (unit), `pnpm test:e2e` (Supertest e2e).
