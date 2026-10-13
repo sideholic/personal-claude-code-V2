@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Stop hook — verify changed-file tests before a worker can claim "done". exit 2 = keep going.
-# Scope = changed files via `vitest related` (planning §13). Skip with CLAUDE_TEAM_SKIP_VERIFY=1.
+# Scope = changed files via `vitest related` (planning §13). Repo without vitest → skip (never block on
+# a missing tool). Skip with CLAUDE_TEAM_SKIP_VERIFY=1.
 set -uo pipefail
 
 [ "${CLAUDE_TEAM_SKIP_VERIFY:-0}" = "1" ] && exit 0
@@ -13,9 +14,15 @@ CHANGED="$( { git diff --name-only HEAD -- '*.ts' '*.tsx' 2>/dev/null; git diff 
   | sort -u | grep -vE '\.(test|spec)\.' || true )"
 [ -z "$CHANGED" ] && exit 0
 
+if ! grep -q '"vitest"' package.json 2>/dev/null; then
+  echo "[stop-verify] no vitest in package.json — skipped." >&2
+  exit 0
+fi
+
 echo "[stop-verify] changed TS detected → vitest related" >&2
 # vitest related runs only the tests importing the changed files (true changed-file scope).
-if ! pnpm exec vitest related --run $CHANGED; then
+pnpm exec vitest related --run --passWithNoTests $CHANGED; RC=$?
+if [ "$RC" -ne 0 ]; then
   echo "[stop-verify] tests failed — not done. Fix or set CLAUDE_TEAM_SKIP_VERIFY=1 to override." >&2
   exit 2
 fi

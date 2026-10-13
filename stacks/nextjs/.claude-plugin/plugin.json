@@ -1,11 +1,17 @@
 {
   "name": "stack-nextjs",
-  "description": "Next.js (App Router) + TypeScript stack overlay: core conventions, data fetching, testing. Layers on coding/testing-principles.",
-  "version": "2.0.0",
+  "description": "Next.js (App Router, 16+) + TypeScript stack overlay: core conventions (proxy · async request APIs · typegen), data fetching (Cache Components · Server Actions), testing (Vitest · RTL · MSW · Playwright). Layers on coding/testing-principles.",
+  "version": "2.1.0",
   "author": {
     "name": "jeondoh",
     "email": "jundo1302@gmail.com"
   },
   "license": "MIT",
-  "keywords": ["nextjs", "react", "typescript", "stack-overlay"]
+  "keywords": [
+    "nextjs",
+    "react",
+    "typescript",
+    "vitest",
+    "stack-overlay"
+  ]
 }
