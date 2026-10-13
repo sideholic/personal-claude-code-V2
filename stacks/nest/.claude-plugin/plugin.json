@@ -1,11 +1,19 @@
 {
   "name": "stack-nest",
-  "description": "NestJS + TypeScript stack overlay: core conventions, data access, testing. Layers on coding/testing-principles.",
-  "version": "2.0.0",
+  "description": "NestJS + TypeScript stack overlay: core conventions (ESM/CJS per repo), data access, testing (Vitest or Jest per repo). Layers on coding/testing-principles.",
+  "version": "2.1.0",
   "author": {
     "name": "jeondoh",
     "email": "jundo1302@gmail.com"
   },
   "license": "MIT",
-  "keywords": ["nestjs", "typescript", "prisma", "mysql", "stack-overlay"]
+  "keywords": [
+    "nestjs",
+    "typescript",
+    "prisma",
+    "mysql",
+    "vitest",
+    "jest",
+    "stack-overlay"
+  ]
 }
